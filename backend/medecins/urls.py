@@ -3,7 +3,8 @@ from .views import MedecinViewSet, SpecialiteViewSet
 
 router = DefaultRouter()
 
-router.register("", MedecinViewSet, basename="medecin")
+# Register nested routes before the catch-all medecin detail route (pk would swallow "specialites").
 router.register("specialites", SpecialiteViewSet, basename="specialite")
+router.register("", MedecinViewSet, basename="medecin")
 
 urlpatterns = router.urls

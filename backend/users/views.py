@@ -2,11 +2,31 @@ from rest_framework import viewsets, generics, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 from users.permissions import IsAdmin
 
 from .models import User
-from .serializers import UserSerializer
+from .serializers import UserSerializer, ProfileSerializer
+
+
+class EmailOrUsernameTokenObtainPairSerializer(TokenObtainPairSerializer):
+    """Accept username or email in the username field."""
+
+    def validate(self, attrs):
+        login = attrs.get(self.username_field, "")
+        if "@" in login:
+            try:
+                user = User.objects.get(email__iexact=login)
+                attrs[self.username_field] = user.username
+            except User.DoesNotExist:
+                pass
+        return super().validate(attrs)
+
+
+class EmailOrUsernameTokenObtainPairView(TokenObtainPairView):
+    serializer_class = EmailOrUsernameTokenObtainPairSerializer
 
 
 # -----------------------------
@@ -46,7 +66,7 @@ class RegisterAPIView(generics.CreateAPIView):
 # -----------------------------
 class ProfileAPIView(generics.RetrieveAPIView):
 
-    serializer_class = UserSerializer
+    serializer_class = ProfileSerializer
     permission_classes = [IsAuthenticated]
 
     def get_object(self):
